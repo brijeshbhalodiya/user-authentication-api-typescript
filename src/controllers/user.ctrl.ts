@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { validateEmail } from "../utils/validator";
 import asyncCatch from "./../errors/asyncCatch";
 import { IUser } from "./../types/user";
-import { BadUserInputError, CustomError } from "./../errors/customErrors";
+import { BadUserInputError, CustomError, EntityNotFoundError } from "./../errors/customErrors";
 import User from "./../models/User";
 import jwt from "./../utils/jwt";
 
@@ -28,12 +28,12 @@ export const signup = asyncCatch(async (req: Request, res: Response, next: NextF
     firstName: body.firstName,
     lastName: body.lastName,
     email: body.email,
-    pwdHash
+    password: pwdHash
   });
 
   await newUser.save();
 
-  const token = jwt.signToken({ userId: newUser._id });
+  const token = jwt.signToken({ userId: newUser._id }, { expiresIn: process.env.JWT_EXPIRES_IN });
 
   res.setHeader("Authorization", `Bearer ${token}`);
 
@@ -41,4 +41,36 @@ export const signup = asyncCatch(async (req: Request, res: Response, next: NextF
     "message": "User registered successfully",
     token: token
   });
+});
+
+export const login = asyncCatch(async (req: Request, res: Response, next: NextFunction) => {
+  const body = req.body as Pick<IUser, "email" | "password">
+  
+  if(!validateEmail(body.email)){
+    return next(new BadUserInputError({fields: ['email']}))
+  }
+
+  const user: IUser | null = await User.findOne({ email: body.email });
+  
+  if(!user){
+    return next(new EntityNotFoundError("user"));
+  }
+
+  const isPasswordValid: boolean = await bcrypt.compare(body.password, user.password)
+
+  if(!isPasswordValid){
+    return next(new EntityNotFoundError("user"));
+  }
+
+  const token = jwt.signToken({ userId: user._id }, { expiresIn: process.env.JWT_EXPIRES_IN });
+
+  res.setHeader("Authorization", `Bearer ${token}`);
+
+  return res.status(200).json({
+    "message": "Success",
+    token: token
+  });
+
+
+
 });

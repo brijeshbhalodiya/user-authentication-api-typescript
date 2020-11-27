@@ -24,3 +24,9 @@ export class RouteNotFoundError extends CustomError {
     super(`Route '${originalUrl}' does not exist.`, 'ROUTE_NOT_FOUND', 404);
   }
 }
+
+export class EntityNotFoundError extends CustomError {
+  constructor(entityName: string) {
+    super(`${entityName} not found.`, 'ENTITY_NOT_FOUND', 404);
+  }
+}

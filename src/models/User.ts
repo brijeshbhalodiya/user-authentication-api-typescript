@@ -16,7 +16,7 @@ const userSchema: Schema = new Schema({
     required: true,
     unique: true
   },
-  pwdHash: {
+  password: {
     type: String,
     required: false
   },
