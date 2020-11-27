@@ -21,7 +21,7 @@ app.use(cors());
 
 app.use("/auth", Routes);
 
-app.use((req: Request, res: Response, next: NextFunction) => new RouteNotFoundError(req.originalUrl));
+app.use((req: Request, res: Response, next: NextFunction) => next(new RouteNotFoundError(req.originalUrl)));
 app.use(handleError);
 
 mongoose.connect(MONGO_URI, { useUnifiedTopology: true })
